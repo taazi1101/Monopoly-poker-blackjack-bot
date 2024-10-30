@@ -26,3 +26,7 @@ pytesseract - uses the google Tesseract OCR to detect numbers
 External libraries:
 
 Tesseract OCR - image recognition -> number recognition
+
+---------------------------------------------------------------------
+
+Version: 2.0
