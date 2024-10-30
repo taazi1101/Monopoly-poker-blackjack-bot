@@ -1,11 +1,15 @@
 # Monopoly-poker-blackjack-bot
 Uses the mouse to play monopoly poker blackjack.
 
+---------------------------------------------------------------------
 
 Uses standard libraries:
-os
-time\
 
+os
+
+time
+
+---------------------------------------------------------------------
 
 Uses python libraries:
 
@@ -17,6 +21,7 @@ keyboard - to control starting and stopping + set locations
 
 pytesseract - uses the google Tesseract OCR to detect numbers
 
+---------------------------------------------------------------------
 
 External libraries:
 
