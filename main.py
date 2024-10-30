@@ -50,9 +50,11 @@ offBind = "p"
 
 logging = True
 
+removePics = True
+
 logFile = "data/bjLogs.txt"
-tempImagePath = "data/temp.png"
-dealerTemp = "data/dealerTemp.png"
+tempImagePathBase = f"data/pics/temp"
+dealerTempBase = f"data/pics/dealerTemp"
 
 def loadLocationsFile(filename):
     if os.path.exists(filename):
@@ -186,7 +188,7 @@ def formatImage(path):
     img = Image.open(path).convert("LA")
     imgEnh = ImageEnhance.Contrast(img)
     img = imgEnh.enhance(5)
-    #img = img.filter(ImageFilter.GaussianBlur(radius=5))
+    #img = img.filter(ImageFilter.GaussianBlur(radius=1))
     img.save(path)
 
 def getLocations():
@@ -229,6 +231,8 @@ def getLocations():
 
 if os.path.exists("data") == False:
     os.mkdir("data")
+if os.path.exists("data/pics") == False:
+    os.mkdir("data/pics")
 
 print("Monopoly poker blackjack bot.")
 
@@ -267,14 +271,17 @@ while True:
             continue
         #log("New round.",logFile,logging,False)
         print("NEWROUND")
+        tempImagePath = f"data/pics/temp{str(time.monotonic())}.png"
+        dealerTemp = f"data/pics/dealerTemp{str(time.monotonic())}.png"
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
         pyautogui.screenshot(imageFilename=dealerTemp,region=numbersLocationd)
         formatImage(tempImagePath)
         formatImage(dealerTemp)
         hand = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 outputbase digits'))
         dealerHand = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 outputbase digits'))
-        os.remove(tempImagePath)
-        os.remove(dealerTemp)
+        if removePics:
+            os.remove(tempImagePath)
+            os.remove(dealerTemp)
         play,playStyle = bjDecider(hand,dealerHand,play)
         if play == 3:
             continue
