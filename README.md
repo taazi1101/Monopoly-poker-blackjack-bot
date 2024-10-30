@@ -1,4 +1,7 @@
 # Monopoly-poker-blackjack-bot
+
+IN DEVELOPMENT!!!
+
 Uses the mouse to play monopoly poker blackjack.
 
 ---------------------------------------------------------------------
