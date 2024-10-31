@@ -48,15 +48,9 @@ locationsFile = "data/locations.txt"
 onBind = "o"
 offBind = "p"
 
-global debug
-debug = True
+logging = True
 
-if debug:
-    logging = True
-    removePics = False
-else:
-    logging = False
-    removePics = True
+removePics = True
 
 logFile = "data/bjLogs.txt"
 tempImagePathBase = f"data/pics/temp"
@@ -127,79 +121,52 @@ def log(data,path,logging,terminal):
         with open(path,"a") as f:
             f.write(data + "\n")
 
-def filterNumbers(inStrRaw):
-    if debug:
-        print(inStrRaw)
+def filterNumbers(inStr):
+    #print(inStr)
     numbers = ["1","2","3","4","5","6","7","8","9","0"]
+    out = ""
+    for x in inStr:
+        if x in numbers:
+            out = out + x
 
-    inStrRaw = str(inStrRaw).split("/")
+    if out == "":
+        out = 0
+    return int(out)
 
-    if "/" in inStrRaw:
-        ace = True
-    else:
-        ace = False
-
-    outList = []
-    for inStr in inStrRaw:
-        out = ""
-        for x in inStr:
-            if x in numbers:
-                out = out + x
-
-        if out == "":
-            out = 0
-        outList.append(int(out))
-
-    if debug:
-        print(str(outList) + "|" + str(ace))
-    
-    return outList, ace
-
-def bjDecider(total,dealerHand,handAce,dealerAce,lastPlay):
+def bjDecider(total,dealerHand,lastPlay):
     #return 0 hit | 1 stand | 2 double
-    if dealerAce:
-        dealerHandPlay = 1
-    else:
-        dealerHandPlay = dealerHand[0]
-    if handAce:
-        if total[0] > 11 and total[0] < 20:
-            totalPlay = total[1]
-        else:
-            totalPlay = total[0]
-    else:
-        totalPlay = total[0]
     playStyle = ""
-    if dealerHandPlay > 6:
+    if dealerHand > 6:
         #Agressive playstyle
         playStyle = "Agressive"
-        if totalPlay > 100:
+        if total > 100:
             return 0,playStyle
-        elif totalPlay > 16:
+        elif total > 16:
             return 1,playStyle
-        elif totalPlay == 10 and lastPlay != 0:
+        elif total == 10 and lastPlay != 0:
             return 2,playStyle
-        elif totalPlay == 11 and lastPlay != 0:
+        elif total == 11 and lastPlay != 0:
             return 2,playStyle
-        elif totalPlay == 0:
+        elif total == 0:
             return 3,playStyle
-        elif totalPlay < 17:
+        elif total < 17:
             return 0,playStyle
         else:
             return 3,playStyle
     else:
         #Anti bust playstyle
         playStyle = "Anti bust"
-        if totalPlay > 100:
+        if total > 100:
             return 0,playStyle
-        elif totalPlay > 11:
+        elif total > 11:
             return 1,playStyle
-        elif totalPlay == 10 and lastPlay != 0:
+        elif total == 10 and lastPlay != 0:
             return 2,playStyle
-        elif totalPlay == 11 and lastPlay != 0:
+        elif total == 11 and lastPlay != 0:
             return 2,playStyle
-        elif totalPlay == 0:
+        elif total == 0:
             return 3,playStyle
-        elif totalPlay < 12:
+        elif total < 12:
             return 0,playStyle
         else:
             return 3,playStyle
@@ -213,25 +180,10 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
         time.sleep(frequency)
         timePassed += frequency
         if timePassed > 3:
-            if debug:
-                print("STUCK...")
+            #log("Stuck. Cointinuing...",logFile,logging,True)
             return 1
     time.sleep(2.5)
 
-#Change name to formatImage and all calls
-def formatImage2(path):
-    img = Image.open(path).convert("LA") 
-
-    scale_factor = 4
-    new_size = (img.width * scale_factor, img.height * scale_factor)
-    img = img.resize(new_size, Image.LANCZOS)
-    
-    img = ImageEnhance.Contrast(img).enhance(3)  
-    img = img.filter(ImageFilter.SHARPEN)  
-
-    img.save(path, dpi=(300, 300)) 
-
-#REMOVE
 def formatImage(path):
     img = Image.open(path).convert("LA")
     imgEnh = ImageEnhance.Contrast(img)
@@ -282,9 +234,6 @@ if os.path.exists("data") == False:
 if os.path.exists("data/pics") == False:
     os.mkdir("data/pics")
 
-if debug:
-    print("Debugging turned on.\nLogs will be created and temporary picture files won't be deleted.")
-
 print("Monopoly poker blackjack bot.")
 
 selection = input("1:Load settings from file. 2:Input new settings.\n:")
@@ -321,28 +270,22 @@ while True:
             play = 1
             continue
         #log("New round.",logFile,logging,False)
-        if logging:
-            print("NEWROUND")
+        print("NEWROUND")
         tempImagePath = f"{tempImagePathBase}{str(time.monotonic())}.png"
         dealerTemp = f"{dealerTempBase}{str(time.monotonic())}.png"
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
         pyautogui.screenshot(imageFilename=dealerTemp,region=numbersLocationd)
-        formatImage2(tempImagePath)
-        formatImage2(dealerTemp)
-        #r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"' altarnate config to detect aces
-        #r'--oem 3 --psm 6 outputbase digits' only detects digits ACES WONT WORK
-        hand, handAce = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"'))
-        dealerHand, dealerAce = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"'))
+        formatImage(tempImagePath)
+        formatImage(dealerTemp)
+        hand = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 outputbase digits'))
+        dealerHand = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 outputbase digits'))
         if removePics:
             os.remove(tempImagePath)
             os.remove(dealerTemp)
-        play,playStyle = bjDecider(hand,dealerHand,handAce,dealerAce,play)
+        play,playStyle = bjDecider(hand,dealerHand,play)
         if play == 3:
             continue
-        if logging:
-            log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
-        else:
-            print(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.")
+        log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
         pyautogui.click(playLocations[play][0],playLocations[play][1])
 
     log("stopped.",logFile,logging,True)
