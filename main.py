@@ -48,9 +48,13 @@ locationsFile = "data/locations.txt"
 onBind = "o"
 offBind = "p"
 
-logging = True
-
-removePics = True
+debug = True
+if debug:
+    logging = True
+    removePics = False
+else:
+    logging = False
+    removePics = True
 
 logFile = "data/bjLogs.txt"
 tempImagePathBase = f"data/pics/temp"
@@ -149,46 +153,48 @@ def bjDecider(total,dealerHand,handAce,dealerAce,lastPlay):
     #return 0 hit | 1 stand | 2 double
     if dealerAce:
         dealerHand = 1
-    if handAce == False:
-        total = total[0]
-        playStyle = ""
-        if dealerHand > 6:
-            #Agressive playstyle
-            playStyle = "Agressive"
-            if total > 100:
-                return 0,playStyle
-            elif total > 16:
-                return 1,playStyle
-            elif total == 10 and lastPlay != 0:
-                return 2,playStyle
-            elif total == 11 and lastPlay != 0:
-                return 2,playStyle
-            elif total == 0:
-                return 3,playStyle
-            elif total < 17:
-                return 0,playStyle
-            else:
-                return 3,playStyle
+    if handAce:
+        if total[0] > 11 and total[0] < 20:
+            total = total[1]
         else:
-            #Anti bust playstyle
-            playStyle = "Anti bust"
-            if total > 100:
-                return 0,playStyle
-            elif total > 11:
-                return 1,playStyle
-            elif total == 10 and lastPlay != 0:
-                return 2,playStyle
-            elif total == 11 and lastPlay != 0:
-                return 2,playStyle
-            elif total == 0:
-                return 3,playStyle
-            elif total < 12:
-                return 0,playStyle
-            else:
-                return 3,playStyle
+            total = total[0]
     else:
-        print("ACE")
-        #ace play style
+        total = total[0]
+    playStyle = ""
+    if dealerHand > 6:
+        #Agressive playstyle
+        playStyle = "Agressive"
+        if total > 100:
+            return 0,playStyle
+        elif total > 16:
+            return 1,playStyle
+        elif total == 10 and lastPlay != 0:
+            return 2,playStyle
+        elif total == 11 and lastPlay != 0:
+            return 2,playStyle
+        elif total == 0:
+            return 3,playStyle
+        elif total < 17:
+            return 0,playStyle
+        else:
+            return 3,playStyle
+    else:
+        #Anti bust playstyle
+        playStyle = "Anti bust"
+        if total > 100:
+            return 0,playStyle
+        elif total > 11:
+            return 1,playStyle
+        elif total == 10 and lastPlay != 0:
+            return 2,playStyle
+        elif total == 11 and lastPlay != 0:
+            return 2,playStyle
+        elif total == 0:
+            return 3,playStyle
+        elif total < 12:
+            return 0,playStyle
+        else:
+            return 3,playStyle
 
 
 def waitNewRound(location, color, frequency, tolerance,logFile,logging):
@@ -203,6 +209,7 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
             return 1
     time.sleep(2.5)
 
+#Change name to formatImage and all calls
 def formatImage2(path):
     img = Image.open(path).convert("LA") 
 
@@ -215,6 +222,7 @@ def formatImage2(path):
 
     img.save(path, dpi=(300, 300)) 
 
+#REMOVE
 def formatImage(path):
     img = Image.open(path).convert("LA")
     imgEnh = ImageEnhance.Contrast(img)
@@ -265,6 +273,9 @@ if os.path.exists("data") == False:
 if os.path.exists("data/pics") == False:
     os.mkdir("data/pics")
 
+if debug:
+    print("Debugging turned on.\nLogs will be created and temporary picture files won't be deleted.")
+
 print("Monopoly poker blackjack bot.")
 
 selection = input("1:Load settings from file. 2:Input new settings.\n:")
@@ -301,7 +312,8 @@ while True:
             play = 1
             continue
         #log("New round.",logFile,logging,False)
-        print("NEWROUND")
+        if logging:
+            print("NEWROUND")
         tempImagePath = f"{tempImagePathBase}{str(time.monotonic())}.png"
         dealerTemp = f"{dealerTempBase}{str(time.monotonic())}.png"
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
@@ -309,7 +321,7 @@ while True:
         formatImage2(tempImagePath)
         formatImage2(dealerTemp)
         #r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"' altarnate config to detect aces
-        #r'--oem 3 --psm 6 outputbase digits'
+        #r'--oem 3 --psm 6 outputbase digits' only detects digits ACES WONT WORK
         hand, handAce = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"'))
         dealerHand, dealerAce = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"'))
         if removePics:
