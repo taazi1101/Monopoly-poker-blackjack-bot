@@ -225,17 +225,13 @@ def formatImage2(path):
     scale_factor = 4
     new_size = (imgRaw.width * scale_factor, imgRaw.height * scale_factor)
     imgRaw = imgRaw.resize(new_size, Image.LANCZOS)
-    
-    imgRaw = ImageEnhance.Contrast(imgRaw).enhance(3)  
-    imgRaw = imgRaw.filter(ImageFilter.SHARPEN)  
 
-    #print(list(imgRaw.getdata()))
     pixels = imgRaw.load()
 
     imgMode = imgRaw.mode
     imgSize = imgRaw.size
 
-    tolerance = 1
+    tolerance = 10
     
     pixelWhiteness = 255 - tolerance
 
@@ -246,6 +242,11 @@ def formatImage2(path):
                 if pixel[1] < pixelWhiteness:
                     if pixel[2] < pixelWhiteness:
                         pixels[x, y] = (0, 0, 0, 255)
+    
+    imgRaw = ImageEnhance.Contrast(imgRaw).enhance(3)  
+    imgRaw = imgRaw.filter(ImageFilter.SHARPEN)  
+
+    #print(list(imgRaw.getdata()))
 
     imgRaw.save(path, dpi=(300, 300)) 
 
