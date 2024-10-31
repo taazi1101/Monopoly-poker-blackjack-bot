@@ -242,18 +242,12 @@ def formatImage2(path):
     for y in range(imgSize[1]):
         for x in range(imgSize[0]):
             pixel = pixels[x, y]
-            if pixel[0] < pixelWhiteness and pixel[1] < pixelWhiteness and pixel[2] < pixelWhiteness:
-                pixels[x, y] = (0, 0, 0, 255)
+            if pixel[0] < pixelWhiteness:
+                if pixel[1] < pixelWhiteness:
+                    if pixel[2] < pixelWhiteness:
+                        pixels[x, y] = (0, 0, 0, 255)
 
     imgRaw.save(path, dpi=(300, 300)) 
-
-#REMOVE
-def formatImage(path):
-    img = Image.open(path).convert("LA")
-    imgEnh = ImageEnhance.Contrast(img)
-    img = imgEnh.enhance(5)
-    #img = img.filter(ImageFilter.GaussianBlur(radius=1))
-    img.save(path)
 
 def getLocations():
     #left, top, width, and height
