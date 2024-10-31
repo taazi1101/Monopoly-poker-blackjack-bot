@@ -132,12 +132,12 @@ def filterNumbers(inStrRaw):
         print(inStrRaw)
     numbers = ["1","2","3","4","5","6","7","8","9","0"]
 
-    inStrRaw = str(inStrRaw).split("/")
-
     if "/" in inStrRaw:
         ace = True
     else:
         ace = False
+
+    inStrRaw = str(inStrRaw).split("/")
 
     outList = []
     for inStr in inStrRaw:
@@ -220,16 +220,32 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
 
 #Change name to formatImage and all calls
 def formatImage2(path):
-    img = Image.open(path).convert("LA") 
+    imgRaw = Image.open(path).convert("RGB")
 
     scale_factor = 4
-    new_size = (img.width * scale_factor, img.height * scale_factor)
-    img = img.resize(new_size, Image.LANCZOS)
+    new_size = (imgRaw.width * scale_factor, imgRaw.height * scale_factor)
+    imgRaw = imgRaw.resize(new_size, Image.LANCZOS)
     
-    img = ImageEnhance.Contrast(img).enhance(3)  
-    img = img.filter(ImageFilter.SHARPEN)  
+    imgRaw = ImageEnhance.Contrast(imgRaw).enhance(3)  
+    imgRaw = imgRaw.filter(ImageFilter.SHARPEN)  
 
-    img.save(path, dpi=(300, 300)) 
+    #print(list(imgRaw.getdata()))
+    pixels = imgRaw.load()
+
+    imgMode = imgRaw.mode
+    imgSize = imgRaw.size
+
+    tolerance = 1
+    
+    pixelWhiteness = 255 - tolerance
+
+    for y in range(imgSize[1]):
+        for x in range(imgSize[0]):
+            pixel = pixels[x, y]
+            if pixel[0] < pixelWhiteness and pixel[1] < pixelWhiteness and pixel[2] < pixelWhiteness:
+                pixels[x, y] = (0, 0, 0, 255)
+
+    imgRaw.save(path, dpi=(300, 300)) 
 
 #REMOVE
 def formatImage(path):
