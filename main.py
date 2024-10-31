@@ -271,8 +271,8 @@ while True:
             continue
         #log("New round.",logFile,logging,False)
         print("NEWROUND")
-        tempImagePath = f"data/pics/temp{str(time.monotonic())}.png"
-        dealerTemp = f"data/pics/dealerTemp{str(time.monotonic())}.png"
+        tempImagePath = f"{tempImagePathBase}{str(time.monotonic())}.png"
+        dealerTemp = f"{dealerTempBase}{str(time.monotonic())}.png"
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
         pyautogui.screenshot(imageFilename=dealerTemp,region=numbersLocationd)
         formatImage(tempImagePath)
