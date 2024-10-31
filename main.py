@@ -121,55 +121,74 @@ def log(data,path,logging,terminal):
         with open(path,"a") as f:
             f.write(data + "\n")
 
-def filterNumbers(inStr):
+def filterNumbers(inStrRaw):
     #print(inStr)
     numbers = ["1","2","3","4","5","6","7","8","9","0"]
-    out = ""
-    for x in inStr:
-        if x in numbers:
-            out = out + x
 
-    if out == "":
-        out = 0
-    return int(out)
+    inStrRaw = str(inStrRaw).split("/")
 
-def bjDecider(total,dealerHand,lastPlay):
-    #return 0 hit | 1 stand | 2 double
-    playStyle = ""
-    if dealerHand > 6:
-        #Agressive playstyle
-        playStyle = "Agressive"
-        if total > 100:
-            return 0,playStyle
-        elif total > 16:
-            return 1,playStyle
-        elif total == 10 and lastPlay != 0:
-            return 2,playStyle
-        elif total == 11 and lastPlay != 0:
-            return 2,playStyle
-        elif total == 0:
-            return 3,playStyle
-        elif total < 17:
-            return 0,playStyle
-        else:
-            return 3,playStyle
+    if "/" in inStrRaw:
+        ace = True
     else:
-        #Anti bust playstyle
-        playStyle = "Anti bust"
-        if total > 100:
-            return 0,playStyle
-        elif total > 11:
-            return 1,playStyle
-        elif total == 10 and lastPlay != 0:
-            return 2,playStyle
-        elif total == 11 and lastPlay != 0:
-            return 2,playStyle
-        elif total == 0:
-            return 3,playStyle
-        elif total < 12:
-            return 0,playStyle
+        ace = False
+
+    outList = []
+    for inStr in inStrRaw:
+        out = ""
+        for x in inStr:
+            if x in numbers:
+                out = out + x
+
+        if out == "":
+            out = 0
+        outList.append(int(out))
+    
+    return out, ace
+
+def bjDecider(total,dealerHand,handAce,dealerAce,lastPlay):
+    #return 0 hit | 1 stand | 2 double
+    if dealerAce:
+        dealerHand = 1
+    if handAce == False:
+        total = total[0]
+        playStyle = ""
+        if dealerHand > 6:
+            #Agressive playstyle
+            playStyle = "Agressive"
+            if total > 100:
+                return 0,playStyle
+            elif total > 16:
+                return 1,playStyle
+            elif total == 10 and lastPlay != 0:
+                return 2,playStyle
+            elif total == 11 and lastPlay != 0:
+                return 2,playStyle
+            elif total == 0:
+                return 3,playStyle
+            elif total < 17:
+                return 0,playStyle
+            else:
+                return 3,playStyle
         else:
-            return 3,playStyle
+            #Anti bust playstyle
+            playStyle = "Anti bust"
+            if total > 100:
+                return 0,playStyle
+            elif total > 11:
+                return 1,playStyle
+            elif total == 10 and lastPlay != 0:
+                return 2,playStyle
+            elif total == 11 and lastPlay != 0:
+                return 2,playStyle
+            elif total == 0:
+                return 3,playStyle
+            elif total < 12:
+                return 0,playStyle
+            else:
+                return 3,playStyle
+    else:
+        print("ACE")
+        #ace play style
 
 
 def waitNewRound(location, color, frequency, tolerance,logFile,logging):
@@ -183,6 +202,18 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
             #log("Stuck. Cointinuing...",logFile,logging,True)
             return 1
     time.sleep(2.5)
+
+def formatImage2(path):
+    img = Image.open(path).convert("LA") 
+
+    scale_factor = 4
+    new_size = (img.width * scale_factor, img.height * scale_factor)
+    img = img.resize(new_size, Image.LANCZOS)
+    
+    img = ImageEnhance.Contrast(img).enhance(3)  
+    img = img.filter(ImageFilter.SHARPEN)  
+
+    img.save(path, dpi=(300, 300)) 
 
 def formatImage(path):
     img = Image.open(path).convert("LA")
@@ -275,14 +306,16 @@ while True:
         dealerTemp = f"{dealerTempBase}{str(time.monotonic())}.png"
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
         pyautogui.screenshot(imageFilename=dealerTemp,region=numbersLocationd)
-        formatImage(tempImagePath)
-        formatImage(dealerTemp)
-        hand = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 outputbase digits'))
-        dealerHand = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 outputbase digits'))
+        formatImage2(tempImagePath)
+        formatImage2(dealerTemp)
+        #r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"' altarnate config to detect aces
+        #r'--oem 3 --psm 6 outputbase digits'
+        hand, handAce = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"'))
+        dealerHand, dealerAce = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 -c tessedit_char_whitelist="0123456789/"'))
         if removePics:
             os.remove(tempImagePath)
             os.remove(dealerTemp)
-        play,playStyle = bjDecider(hand,dealerHand,play)
+        play,playStyle = bjDecider(hand,dealerHand,handAce,dealerAce,play)
         if play == 3:
             continue
         log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
