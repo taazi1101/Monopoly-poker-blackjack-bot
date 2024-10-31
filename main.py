@@ -48,7 +48,9 @@ locationsFile = "data/locations.txt"
 onBind = "o"
 offBind = "p"
 
+global debug
 debug = True
+
 if debug:
     logging = True
     removePics = False
@@ -126,7 +128,8 @@ def log(data,path,logging,terminal):
             f.write(data + "\n")
 
 def filterNumbers(inStrRaw):
-    #print(inStr)
+    if debug:
+        print(inStrRaw)
     numbers = ["1","2","3","4","5","6","7","8","9","0"]
 
     inStrRaw = str(inStrRaw).split("/")
@@ -146,52 +149,57 @@ def filterNumbers(inStrRaw):
         if out == "":
             out = 0
         outList.append(int(out))
+
+    if debug:
+        print(str(outList) + "|" + str(ace))
     
-    return out, ace
+    return outList, ace
 
 def bjDecider(total,dealerHand,handAce,dealerAce,lastPlay):
     #return 0 hit | 1 stand | 2 double
     if dealerAce:
-        dealerHand = 1
+        dealerHandPlay = 1
+    else:
+        dealerHandPlay = dealerHand[0]
     if handAce:
         if total[0] > 11 and total[0] < 20:
-            total = total[1]
+            totalPlay = total[1]
         else:
-            total = total[0]
+            totalPlay = total[0]
     else:
-        total = total[0]
+        totalPlay = total[0]
     playStyle = ""
-    if dealerHand > 6:
+    if dealerHandPlay > 6:
         #Agressive playstyle
         playStyle = "Agressive"
-        if total > 100:
+        if totalPlay > 100:
             return 0,playStyle
-        elif total > 16:
+        elif totalPlay > 16:
             return 1,playStyle
-        elif total == 10 and lastPlay != 0:
+        elif totalPlay == 10 and lastPlay != 0:
             return 2,playStyle
-        elif total == 11 and lastPlay != 0:
+        elif totalPlay == 11 and lastPlay != 0:
             return 2,playStyle
-        elif total == 0:
+        elif totalPlay == 0:
             return 3,playStyle
-        elif total < 17:
+        elif totalPlay < 17:
             return 0,playStyle
         else:
             return 3,playStyle
     else:
         #Anti bust playstyle
         playStyle = "Anti bust"
-        if total > 100:
+        if totalPlay > 100:
             return 0,playStyle
-        elif total > 11:
+        elif totalPlay > 11:
             return 1,playStyle
-        elif total == 10 and lastPlay != 0:
+        elif totalPlay == 10 and lastPlay != 0:
             return 2,playStyle
-        elif total == 11 and lastPlay != 0:
+        elif totalPlay == 11 and lastPlay != 0:
             return 2,playStyle
-        elif total == 0:
+        elif totalPlay == 0:
             return 3,playStyle
-        elif total < 12:
+        elif totalPlay < 12:
             return 0,playStyle
         else:
             return 3,playStyle
@@ -205,7 +213,8 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
         time.sleep(frequency)
         timePassed += frequency
         if timePassed > 3:
-            #log("Stuck. Cointinuing...",logFile,logging,True)
+            if debug:
+                print("STUCK...")
             return 1
     time.sleep(2.5)
 
@@ -330,7 +339,10 @@ while True:
         play,playStyle = bjDecider(hand,dealerHand,handAce,dealerAce,play)
         if play == 3:
             continue
-        log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
+        if logging:
+            log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
+        else:
+            print(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.")
         pyautogui.click(playLocations[play][0],playLocations[play][1])
 
     log("stopped.",logFile,logging,True)
