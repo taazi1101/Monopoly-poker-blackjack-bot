@@ -48,8 +48,8 @@ Point(x=949, y=785)|(33, 117, 195) push
 Point(x=949, y=790)|(169, 27, 26) lose/bust
 """
 winColor = (255,204,0)
-loseColor = (33,117,195)
-pushColor = (169,27,26)
+loseColor = (169,27,26)
+pushColor = (33,117,195)
 
 waitCheckFrequency = 1 #seconds wait
 waitCheckColorTolerance = 1
@@ -87,24 +87,24 @@ def detectWinLoop(location,winColor,loseColor,pushColor,frequency,path,logToFile
             return
         if pyautogui.pixelMatchesColor(location[0],location[1],winColor):
             if terminal:
-                print("WIN")
+                print(" WIN",end="")
             if logToFile:
                 with open(path,"a") as f:
-                    f.write("WIN\n")
+                    f.write(" WIN")
             time.sleep(waitAfter)
         if pyautogui.pixelMatchesColor(location[0],location[1],loseColor):
             if terminal:
-                print("LOSE")
+                print(" LOSE",end="")
             if logToFile:
                 with open(path,"a") as f:
-                    f.write("LOSE\n")
+                    f.write(" LOSE")
             time.sleep(waitAfter)
         if pyautogui.pixelMatchesColor(location[0],location[1],pushColor):
             if terminal:
-                print("PUSH")
+                print(" PUSH",end="")
             if logToFile:
                 with open(path,"a") as f:
-                    f.write("PUSH\n")
+                    f.write(" PUSH")
             time.sleep(waitAfter)
         time.sleep(frequency)
 
@@ -174,10 +174,10 @@ def getLocationOnKeypress(key):
 
 def log(data,path,logging,terminal):
     if terminal:
-        print(data)
+        print("\n"+data,end="")
     if logging:
         with open(path,"a") as f:
-            f.write(data + "\n")
+            f.write("\n"+data)
 
 def filterNumbers(inStr):
     #print(inStr)
