@@ -51,6 +51,9 @@ winColor = (255,204,0)
 loseColor = (169,27,26)
 pushColor = (33,117,195)
 
+global delayMultiplier
+delayMultiplier = 1
+
 waitCheckFrequency = 0.3 #seconds wait
 waitCheckColorTolerance = 1
 
@@ -62,6 +65,12 @@ onBind = "o"
 offBind = "p"
 
 logging = True
+
+diagnostics = False
+
+if diagnostics:
+    from diagnosticsCounter import *
+    #diagnostic.saveRaw = True
 
 removePics = True
 
@@ -235,14 +244,14 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
     while True:
         if pyautogui.pixelMatchesColor(location[0],location[1],color,tolerance):
             break
-        time.sleep(frequency)
-        timePassed += frequency
+        time.sleep(frequency*delayMultiplier)
+        timePassed += frequency*delayMultiplier
         if timePassed > 2:
             #log("Stuck. Cointinuing...",logFile,logging,True)
             return 1
         if logging:
             print(".",end=" ")
-    time.sleep(1)
+    time.sleep(1*delayMultiplier)
 
 def formatImage(path):
     img = Image.open(path).convert("LA")
@@ -329,33 +338,76 @@ while True:
         runWinDetection = True
         winThread = threading.Thread(target=lambda:detectWinLoop(winLocation,winColor,loseColor,pushColor,winCheckFrequency,logFile,logging,winToTerminal,threading.main_thread()))
         winThread.start()
-
+    firstPlay = True
     while keyboard.is_pressed(offBind) == False:
+        mainCount = diagnostic.count()
+
         if play == 1:
-            time.sleep(5)
+            if diagnostics:
+                count = diagnostic.count()
+            if firstPlay == False:
+                time.sleep(7*delayMultiplier)
             pyautogui.click(bet[0],bet[1])
+            if diagnostics:
+                count.replaceCount("Bet wait time: ","Bet wait time: ")
+
+        firstPlay = False
+
+        if diagnostics:
+            count = diagnostic.count()
         isStuck = waitNewRound(waitTriggerLocation,waitTriggerColor,waitCheckFrequency,waitCheckColorTolerance,logFile,logging)
+        if diagnostics:
+            count.replaceCount("New round wait: ","New round wait: ")
+
         if isStuck:
             play = 1
             continue
+
         #log("New round.",logFile,logging,False)
         #print("NEWROUND")
+
         tempImagePath = f"{tempImagePathBase}{str(time.monotonic())}.png"
         dealerTemp = f"{dealerTempBase}{str(time.monotonic())}.png"
+
+        if diagnostics:
+            count = diagnostic.count()
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
         pyautogui.screenshot(imageFilename=dealerTemp,region=numbersLocationd)
+        if diagnostics:
+            count.replaceCount("Screenshot time: ","Screenshot time: ")
+
+        if diagnostics:
+            count = diagnostic.count()
         formatImage(tempImagePath)
         formatImage(dealerTemp)
+        if diagnostics:
+            count.replaceCount("Format time: ","Format time: ")
+
+        if diagnostics:
+            count = diagnostic.count()
         hand = filterNumbers(pytesseract.image_to_string(tempImagePath,config=r'--oem 3 --psm 6 outputbase digits'))
         dealerHand = filterNumbers(pytesseract.image_to_string(dealerTemp,config=r'--oem 3 --psm 6 outputbase digits'))
+        if diagnostics:
+            count.replaceCount("Recognition time: ","Recognition time: ")
+
         if removePics:
             os.remove(tempImagePath)
             os.remove(dealerTemp)
+
+        if diagnostics:
+            count = diagnostic.count()
         play,playStyle = bjDecider(hand,dealerHand,play)
+        if diagnostics:
+            count.replaceCount("Decider time: ","Decider time: ")
+
         if play == 3:
             continue
+
         log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
+
         pyautogui.click(playLocations[play][0],playLocations[play][1])
+
+        mainCount.replaceCount("Main loop time: ","Main loop time: ")
 
     if winDetection:
         runWinDetection = False

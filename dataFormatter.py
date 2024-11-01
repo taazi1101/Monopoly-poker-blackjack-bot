@@ -83,7 +83,7 @@ with open(f"debugging/formatterResults{time.monotonic()}.txt","w") as f:
     f.write(f"Hits: {hit} |Stands: {stand} |Doubles: {double}\n")
     f.write(f"Hit rate: {round((hit/hands)*100)}% |Stand rate: {round((stand/hands)*100)}% |Double rate: {round((double/hands)*100)}%\n")
     f.write(f"Hand zero errors: {round((handZeroError/hands)*100)}% |Dealer hand zero errors: {round((dealerHandZeroError/hands)*100)}%\nHand over errors: {round((overReadHandError/hands)*100)}% |Dealer hand over errors: {round((overReadHandDealerError/hands)*100)}%\n")
-    f.write(f"Total wins:{win} |Total loses: {lose} |Total pushes: {push}\nWin rate: {round((win/totalCompleteRounds)*100)}% |Lose rate: {round((lose/totalCompleteRounds)*100)}% |Push rate: {round((push/totalCompleteRounds)*100)}%")
+    f.write(f"Total wins: {win} |Total loses: {lose} |Total pushes: {push}\nWin rate: {round((win/totalCompleteRounds)*100)}% |Lose rate: {round((lose/totalCompleteRounds)*100)}% |Push rate: {round((push/totalCompleteRounds)*100)}%")
 
 if deleteUsedLogs:
     os.remove(fileName)
