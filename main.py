@@ -146,9 +146,11 @@ def filterNumbers(inStrRaw):
             if x in numbers:
                 out = out + x
 
-        if out == "":
-            out = 0
-        outList.append(int(out))
+        if len(out) != 0:
+            outList.append(int(out))
+    
+    if len(outList) == 0:
+        outList.append(0)
 
     if debug:
         print(str(outList) + "|" + str(ace))
@@ -220,34 +222,48 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
 
 #Change name to formatImage and all calls
 def formatImage2(path):
-    imgRaw = Image.open(path).convert("RGB")
+    imgRaw = Image.open(path).convert("RGBA")
 
-    scale_factor = 4
+    scale_factor = 8
     new_size = (imgRaw.width * scale_factor, imgRaw.height * scale_factor)
     imgRaw = imgRaw.resize(new_size, Image.LANCZOS)
-
+    """
     pixels = imgRaw.load()
 
     imgMode = imgRaw.mode
     imgSize = imgRaw.size
 
-    tolerance = 10
+    tolerance = 15
     
     pixelWhiteness = 255 - tolerance
+
+    if debug:
+        whitened = 0
+        blackened = 0
+
+    img = Image.new(mode=imgMode,size=imgSize)
 
     for y in range(imgSize[1]):
         for x in range(imgSize[0]):
             pixel = pixels[x, y]
-            if pixel[0] < pixelWhiteness:
-                if pixel[1] < pixelWhiteness:
-                    if pixel[2] < pixelWhiteness:
-                        pixels[x, y] = (0, 0, 0, 255)
+            if pixel[2] > pixelWhiteness and pixel[1] > pixelWhiteness and pixel[0] > pixelWhiteness:
+                img.putpixel([x,y],(0,0,0,255))
+                if debug:
+                    whitened += 1
+            else:
+                img.putpixel([x,y],(255,255,255,255))
+                if debug:
+                    blackened += 1
+    if debug:
+        print(f"Pixels whitened: {str(whitened)}")
+        print(f"Pixels blackened:{str(blackened)}")
     
-    imgRaw = ImageEnhance.Contrast(imgRaw).enhance(3)  
-    imgRaw = imgRaw.filter(ImageFilter.SHARPEN)  
+    #img = ImageEnhance.Contrast(img).enhance(3)  
+    #img = img.filter(ImageFilter.GaussianBlur(1))  
+    #img = img.filter(ImageFilter.SHARPEN)
 
     #print(list(imgRaw.getdata()))
-
+    """
     imgRaw.save(path, dpi=(300, 300)) 
 
 def getLocations():
@@ -354,6 +370,9 @@ while True:
             log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
         else:
             print(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.")
+        if debug and removePics == False:
+            os.rename(tempImagePath,tempImagePathBase+f"-Hand:{str(hand)}-Dealers hand:{str(dealerHand)}-Play:{str(play)}-Play style:{playStyle}-{str(time.monotonic())}.png".replace("[","").replace("]","").replace("/","-").replace(":"," ").replace(","," "))
+            os.rename(dealerTemp,dealerTempBase+f"-Hand:{str(hand)}-Dealers hand:{str(dealerHand)}-Play:{str(play)}-Play style:{playStyle}-{str(time.monotonic())}.png".replace("[","").replace("]","").replace("/","-").replace(":"," ").replace(","," "))
         pyautogui.click(playLocations[play][0],playLocations[play][1])
 
     log("stopped.",logFile,logging,True)
