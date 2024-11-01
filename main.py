@@ -51,7 +51,7 @@ winColor = (255,204,0)
 loseColor = (169,27,26)
 pushColor = (33,117,195)
 
-waitCheckFrequency = 1 #seconds wait
+waitCheckFrequency = 0.3 #seconds wait
 waitCheckColorTolerance = 1
 
 winCheckFrequency = 0.3 # seconds wait
@@ -87,21 +87,21 @@ def detectWinLoop(location,winColor,loseColor,pushColor,frequency,path,logToFile
             return
         if pyautogui.pixelMatchesColor(location[0],location[1],winColor):
             if terminal:
-                print(" WIN",end="")
+                print("WIN")
             if logToFile:
                 with open(path,"a") as f:
                     f.write(" WIN")
             time.sleep(waitAfter)
         if pyautogui.pixelMatchesColor(location[0],location[1],loseColor):
             if terminal:
-                print(" LOSE",end="")
+                print("LOSE")
             if logToFile:
                 with open(path,"a") as f:
                     f.write(" LOSE")
             time.sleep(waitAfter)
         if pyautogui.pixelMatchesColor(location[0],location[1],pushColor):
             if terminal:
-                print(" PUSH",end="")
+                print("PUSH")
             if logToFile:
                 with open(path,"a") as f:
                     f.write(" PUSH")
@@ -174,7 +174,7 @@ def getLocationOnKeypress(key):
 
 def log(data,path,logging,terminal):
     if terminal:
-        print("\n"+data,end="")
+        print("\n"+data,end=" ")
     if logging:
         with open(path,"a") as f:
             f.write("\n"+data)
@@ -237,10 +237,12 @@ def waitNewRound(location, color, frequency, tolerance,logFile,logging):
             break
         time.sleep(frequency)
         timePassed += frequency
-        if timePassed > 3:
+        if timePassed > 2:
             #log("Stuck. Cointinuing...",logFile,logging,True)
             return 1
-    time.sleep(2.5)
+        if logging:
+            print(".",end=" ")
+    time.sleep(1)
 
 def formatImage(path):
     img = Image.open(path).convert("LA")
@@ -330,7 +332,7 @@ while True:
 
     while keyboard.is_pressed(offBind) == False:
         if play == 1:
-            time.sleep(7)
+            time.sleep(5)
             pyautogui.click(bet[0],bet[1])
         isStuck = waitNewRound(waitTriggerLocation,waitTriggerColor,waitCheckFrequency,waitCheckColorTolerance,logFile,logging)
         if isStuck:
