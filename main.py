@@ -337,7 +337,7 @@ while True:
             play = 1
             continue
         #log("New round.",logFile,logging,False)
-        print("NEWROUND")
+        #print("NEWROUND")
         tempImagePath = f"{tempImagePathBase}{str(time.monotonic())}.png"
         dealerTemp = f"{dealerTempBase}{str(time.monotonic())}.png"
         pyautogui.screenshot(imageFilename=tempImagePath,region=numbersLocation)
