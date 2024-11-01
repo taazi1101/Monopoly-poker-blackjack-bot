@@ -28,7 +28,7 @@ except:
     input("Press enter to exit...")
     exit(1)
 
-version = "2.1"
+version = "3"
 
 print(f"Application version: {version}\n")
 
