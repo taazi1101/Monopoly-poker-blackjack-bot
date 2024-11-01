@@ -12,6 +12,8 @@ os
 
 time
 
+threading (Only if win detection turned on)
+
 sys*
 
 ---------------------------------------------------------------------
