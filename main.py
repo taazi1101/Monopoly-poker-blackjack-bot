@@ -28,7 +28,7 @@ except:
     input("Press enter to exit...")
     exit(1)
 
-version = "2.1"
+version = "2.11"
 
 print(f"Application version: {version}\n")
 
@@ -38,10 +38,23 @@ numbersLocationd = [0,0,0,0]
 playLocations = [(0,0),(0,0),(0,0)]
 waitTriggerLocation = [0,0]
 waitTriggerColor = [0,0,0] # R G B 0-255
+winLocation = [0,0,0]
 #//// 
+
+
+""" COLOR TEST RESULT
+Point(x=959, y=789)|(255, 204, 0) win
+Point(x=949, y=785)|(33, 117, 195) push
+Point(x=949, y=790)|(169, 27, 26) lose/bust
+"""
+winColor = (255,204,0)
+loseColor = (33,117,195)
+pushColor = (169,27,26)
 
 waitCheckFrequency = 1 #seconds wait
 waitCheckColorTolerance = 1
+
+winCheckFrequency = 0.3 # seconds wait
 
 locationsFile = "data/locations.txt"
 
@@ -52,9 +65,49 @@ logging = True
 
 removePics = True
 
+winDetection = True
+winToTerminal = True
+
+if winDetection:
+    import threading
+    global runWinDetection
+    runWinDetection = bool
+
 logFile = "data/bjLogs.txt"
 tempImagePathBase = f"data/pics/temp"
 dealerTempBase = f"data/pics/dealerTemp"
+
+
+def detectWinLoop(location,winColor,loseColor,pushColor,frequency,path,logToFile,terminal,mainThread):
+    waitAfter = 5
+    while True:
+        if runWinDetection == False:
+            return
+        if mainThread.is_alive() == False:
+            return
+        if pyautogui.pixelMatchesColor(location[0],location[1],winColor):
+            if terminal:
+                print("WIN")
+            if logToFile:
+                with open(path,"a") as f:
+                    f.write("WIN\n")
+            time.sleep(waitAfter)
+        if pyautogui.pixelMatchesColor(location[0],location[1],loseColor):
+            if terminal:
+                print("LOSE")
+            if logToFile:
+                with open(path,"a") as f:
+                    f.write("LOSE\n")
+            time.sleep(waitAfter)
+        if pyautogui.pixelMatchesColor(location[0],location[1],pushColor):
+            if terminal:
+                print("PUSH")
+            if logToFile:
+                with open(path,"a") as f:
+                    f.write("PUSH\n")
+            time.sleep(waitAfter)
+        time.sleep(frequency)
+
 
 def loadLocationsFile(filename):
     if os.path.exists(filename):
@@ -100,15 +153,20 @@ def loadLocationsFile(filename):
         for x in betSTR:
             bet.append(int(x))
 
-        version = lines[6]
+        winColorLocationSTR = tuple(lines[6].replace("(","").replace(")","").replace("\n","").replace(" ","").split(","))
+        winColorLocation = []
+        for x in winColorLocationSTR:
+            winColorLocation.append(int(x))
 
-        return numbersLocation,numbersLocationd,[hit,stand,double],waitTriggerLocation,waitTriggerColor,bet,version
+        version = lines[7]
+
+        return numbersLocation,numbersLocationd,[hit,stand,double],waitTriggerLocation,waitTriggerColor,bet,winColorLocation,version
     else:
         raise FileNotFoundError
     
-def writeLocationsFile(filename,numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,version):
+def writeLocationsFile(filename,numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,winColorLocation,version):
     with open(filename,"w") as f:
-        f.write(str(f"{numbersLocation}\n{numbersLocationd}\n{playLocations}\n{waitTriggerLocation}\n{waitTriggerColor}\n{bet}\n{version}"))
+        f.write(str(f"{numbersLocation}\n{numbersLocationd}\n{playLocations}\n{waitTriggerLocation}\n{waitTriggerColor}\n{bet}\n{winColorLocation}\n{version}"))
 
 def getLocationOnKeypress(key):
     keyboard.wait(key)
@@ -216,6 +274,9 @@ def getLocations():
     heightd = rbad[1]-ltad[1]
     numbersLocationd = [leftd,topd,widthd,heightd]
 
+    print("Hover over a win location (Checks color from position) and press k")
+    winLocation = getLocationOnKeypress("k")
+
     print("Hover over a wait trigger location (Checks color when round is started) and press k")
     trigger = getLocationOnKeypress("k")
     triggerColor = pyautogui.pixel(trigger[0],trigger[1])
@@ -227,7 +288,7 @@ def getLocations():
     print("Hover over double and press k")
     double = getLocationOnKeypress("k")
 
-    return numbersLocation,numbersLocationd,[tuple(hit),tuple(stand),tuple(double)],tuple(trigger),tuple(triggerColor),tuple(bet)
+    return numbersLocation,numbersLocationd,[tuple(hit),tuple(stand),tuple(double)],tuple(trigger),tuple(triggerColor),tuple(bet),tuple(winLocation)
 
 if os.path.exists("data") == False:
     os.mkdir("data")
@@ -238,13 +299,13 @@ print("Monopoly poker blackjack bot.")
 
 selection = input("1:Load settings from file. 2:Input new settings.\n:")
 if selection == "1":
-    numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,locVersion = loadLocationsFile(locationsFile)
+    numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,winLocation,locVersion = loadLocationsFile(locationsFile)
 elif selection == "2":
     locVersion = version
-    numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet = getLocations()
+    numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,winLocation = getLocations()
     sels = input("Save settings? [Y/n]\n:").lower()
     if sels != "n":
-        writeLocationsFile(locationsFile,numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,version)
+        writeLocationsFile(locationsFile,numbersLocation,numbersLocationd,playLocations,waitTriggerLocation,waitTriggerColor,bet,winLocation,version)
 else:
     raise SyntaxError
 
@@ -261,6 +322,12 @@ log(f"Program run... {time.ctime()}",logFile,logging,False)
 while True:
     keyboard.wait(onBind)
     log("Started.",logFile,logging,True)
+
+    if winDetection:
+        runWinDetection = True
+        winThread = threading.Thread(target=lambda:detectWinLoop(winLocation,winColor,loseColor,pushColor,winCheckFrequency,logFile,logging,winToTerminal,threading.main_thread()))
+        winThread.start()
+
     while keyboard.is_pressed(offBind) == False:
         if play == 1:
             time.sleep(7)
@@ -287,5 +354,8 @@ while True:
             continue
         log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
         pyautogui.click(playLocations[play][0],playLocations[play][1])
+
+    if winDetection:
+        runWinDetection = False
 
     log("stopped.",logFile,logging,True)
