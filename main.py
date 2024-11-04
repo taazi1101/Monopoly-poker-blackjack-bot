@@ -340,7 +340,8 @@ while True:
         winThread.start()
     firstPlay = True
     while keyboard.is_pressed(offBind) == False:
-        mainCount = diagnostic.count()
+        if diagnostics:
+            mainCount = diagnostic.count()
 
         if play == 1:
             if diagnostics:
@@ -406,8 +407,9 @@ while True:
         log(f"Hand:{str(hand)}|Dealers hand:{str(dealerHand)}|Play:{str(play)}|Play style:{playStyle}.",logFile,logging,True)
 
         pyautogui.click(playLocations[play][0],playLocations[play][1])
-
-        mainCount.replaceCount("Main loop time: ","Main loop time: ")
+        
+        if diagnostics:
+            mainCount.replaceCount("Main loop time: ","Main loop time: ")
 
     if winDetection:
         runWinDetection = False
